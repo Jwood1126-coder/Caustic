@@ -1,0 +1,17 @@
+# Arduino / ESP32 build output
+build/
+*.bin
+*.elf
+*.map
+
+# Python
+__pycache__/
+*.pyc
+
+# SolidWorks lock and temp files
+~$*
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -6,7 +6,7 @@
 
 - **ESP32 = the brain.** It decides how bright the light is and how fast the water ripples. It only sends tiny signals.
 - **DRV8833 = the muscle.** It takes those tiny signals and switches the real power to the LED and the speaker.
-- **Charger + USB-C socket = the food.** 5 V power for the LED and speaker.
+- **Charger = the food.** It plugs into the ESP32, and the ESP32's VIN pin passes 5 V on to the driver.
 - **Resistors = the brakes.** They stop too much current from rushing through.
 - **Heatsink = the radiator.** The LED gets very hot without it.
 
@@ -36,29 +36,25 @@ The numbers match the circles on the diagram.
 | 8 | LED **−** | DRV8833 **OUT4 / BOUT2** | LED return |
 | 9 | DRV8833 **OUT1 / AOUT1** | Three **3 Ω** resistors in a row → speaker | Speaker power |
 | 10 | Speaker's other terminal | DRV8833 **OUT2 / AOUT2** | Speaker return. The speaker can go either way round. |
-| 11 | USB-C socket **+** | DRV8833 **VCC / VM** | 5 V power |
-| 12 | USB-C socket **−** | The GND wire from step 1 | Charger ground joins everything else |
+| 11 | ESP32 **VIN** | DRV8833 **VCC / VM** | 5 V power from the charger, passed through the ESP32 board |
 
 Then:
 
 1. Check the LED's **+** and **−** one more time. Backwards can damage it.
-2. Plug the ESP32's USB into your PC, or into any USB charger.
-3. Plug the 5 V charger into the USB-C socket.
-4. The LED comes on dim, at 10%. Open the control page to adjust it. See [control-page.md](control-page.md).
+2. Plug a **5 V, 2 A or more** charger into the ESP32's USB port. Use a charger with a USB-A port and a USB-A to USB-C (or micro-USB) cable. USB-C to USB-C chargers may not turn on for this board.
+3. The LED comes on dim, at 10%. Open the control page to adjust it. See [control-page.md](control-page.md).
+
+When the ESP32 is plugged into your PC instead of a charger, the PC powers everything. Some PC ports cut out above
+about 0.5 A, so keep the light low then and use the charger for real light tests.
 
 ## Things not to do
 
-- **Don't connect anything to the ESP32's VIN pin** while its USB cable is plugged in. Two power sources can fight.
+- Don't add a second power supply to VIN or VCC. The ESP32's USB port is the only power input.
 - Don't run the LED without its heatsink.
 - Don't look straight into the LED. It's bright enough to hurt your eyes.
 - Keep the breadboard away from the water.
 
-## Running without the PC later
-
-Once everything works, you can power the whole rig from the one charger. Unplug the ESP32's USB cable and add a wire
-from the USB-C socket **+** to the ESP32 **VIN** pin. The control page still works over Wi-Fi.
-
 ## LED-only test without the driver
 
-To check the LED, resistor and heatsink before the DRV8833 is wired: USB-C **+** → 3 Ω resistor → LED **+**, and LED **−** → USB-C **−**.
+To check the LED, resistor and heatsink before the DRV8833 is wired, with the ESP32 on a charger: ESP32 **VIN** → 3 Ω resistor → LED **+**, and LED **−** → ESP32 **GND**.
 The LED runs at full brightness, about 0.5 A, with no dimming. Unplug it if the heatsink gets too hot to hold.

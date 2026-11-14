@@ -9,9 +9,9 @@
 | 3 W LED on a star board (about 180 lm) | 1 | The light. Needs about 0.5 A, far more than an ESP32 pin can give. |
 | Heatsink, 40 x 40 x 20 mm, with thermal tape | 1 | Keeps the LED from overheating. Never run the LED without it. |
 | Speaker, 40 mm | 1 | Taps the water to make ripples. |
-| Power resistor, 3 ohm, 5 W | 4 | One in series with the LED, three in series with the speaker. They limit the current. |
-| USB-C power socket breakout | 1 | Where 5 V comes in. |
-| USB charger, 5 V, at least 1.5 A, plus USB-C cable | 1 | The power. |
+| Power resistor, 3 ohm, 5 W (cement, sold in 10-packs) | 4 | One in series with the LED, three in series with the speaker. They limit the current. |
+| USB charger, 5 V, 2 A or more, with a USB-A port | 1 | The power. Plugs into the ESP32, which passes 5 V to the driver through its VIN pin. |
+| USB-A to USB-C (or micro-USB) cable | 1 | USB-C to USB-C chargers may not turn on for this board. |
 | Breadboard with adhesive back | 1 | Holds the electronics. Sticks on the base bracket. |
 | Jumper wires | About 12 | Connections. |
 | Hook-up wire | Short lengths | Soldered to the LED star and speaker. |

@@ -52,4 +52,4 @@ and the ripple frequency.
 | LED to water | 156 mm along the beam, leaning 25 degrees back |
 | Mirror tilt | 60 to 75 degrees, throwing the pattern 5 to 35 degrees upward |
 | Pattern at 1 m | About 0.70 x 0.43 m, about 17 lux (estimate) |
-| Power | 5 V USB-C, about 1.1 A |
+| Power | 5 V USB charger into the ESP32, 2 A or more (draws about 1.1 A) |

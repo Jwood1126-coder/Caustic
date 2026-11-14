@@ -20,6 +20,26 @@ Don't wire the ESP32 straight to the LED. A pin gives about 0.02 A, and the LED 
 - Push the ESP32 and the DRV8833 into the breadboard so their pins land in separate rows.
 - Look at the labels printed on your DRV8833. Cheap boards say **IN1–IN4, OUT1–OUT4, EEP, VCC**. Pololu boards say **AIN1, BIN1, AOUT1, SLP, VIN**. The diagram shows both names.
 
+## Your board (WWZMDiB black DRV8833)
+
+| Left side, top to bottom | Connects to | Step |
+|---|---|---|
+| IN4 | GND | 6 |
+| IN3 | ESP32 D27 | 5 |
+| GND | ESP32 GND | 1 |
+| VCC | ESP32 VIN | 11 |
+| IN2 | ESP32 D26 | 4 |
+| IN1 | ESP32 D25 | 3 |
+
+| Right side, top to bottom | Connects to | Step |
+|---|---|---|
+| EEP | ESP32 3V3 | 2 |
+| OUT1 | Speaker resistors | 9 |
+| OUT2 | Speaker, other lead | 10 |
+| OUT3 | LED resistor → LED + | 7 |
+| OUT4 | LED − | 8 |
+| ULT | Nothing. It's a fault signal and can stay unconnected. | |
+
 ## Steps
 
 The numbers match the circles on the diagram.

@@ -61,3 +61,4 @@ Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**
 - The speaker gets a sine wave rather than a square wave, so the cone moves smoothly and quietly. The firmware recomputes the duty about every 0.5 ms. The positive half of the wave drives AIN1, the negative half drives AIN2, and the other input stays low.
 - Phase carries over when the frequency changes, so sweeps don't click.
 - BIN2 is wired to GND, so the LED can only ever be driven forwards.
+- The speaker is wired without resistors. `SPK_LIMIT` (0.40) caps its PWM duty, so 100% on the slider is about 0.46 A peak into the 4 Ω 3 W speaker.

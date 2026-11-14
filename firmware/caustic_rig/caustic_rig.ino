@@ -2,7 +2,7 @@
 // Board: ESP32 DevKit V1 (Arduino board "DOIT ESP32 DEVKIT V1"), ESP32 Arduino core 3.x
 //
 // One DRV8833 drives both loads:
-//   Channel A (AIN1/AIN2 -> AOUT1/AOUT2): speaker, through three 3 ohm resistors in series
+//   Channel A (AIN1/AIN2 -> AOUT1/AOUT2): speaker (4 ohm 3 W), wired directly. SPK_LIMIT caps its current.
 //   Channel B (BIN1 -> BOUT1/BOUT2):      LED star, through one 3 ohm resistor. BIN2 is wired to GND.
 //
 // Control it from a web page or the Serial Monitor.
@@ -32,6 +32,10 @@ const int PWM_MAX  = (1 << PWM_BITS) - 1;
 const int LED_START = 10;      // percent at power-up; the LED heats up fast
 const float FREQ_START = 10.0; // Hz
 const float FREQ_MIN = 0.5, FREQ_MAX = 40.0;
+
+// The speaker has no series resistor, so 100% on the slider is limited to 40% PWM duty:
+// about 0.46 A peak and under 0.5 W into the 4 ohm 3 W speaker.
+const float SPK_LIMIT = 0.40;
 
 int ledPercent = LED_START;
 int ampPercent = 0;  // speaker starts off
@@ -226,7 +230,7 @@ void loop() {
   phase += TWO_PI * freqHz * dt;
   if (phase > TWO_PI) phase -= TWO_PI;
 
-  int duty = (int)(sinf(phase) * ampPercent * PWM_MAX / 100);
+  int duty = (int)(sinf(phase) * ampPercent * SPK_LIMIT * PWM_MAX / 100);
   // Positive half drives AIN1, negative half drives AIN2. The other input stays low.
   ledcWrite(PIN_SPK_A, duty > 0 ? duty : 0);
   ledcWrite(PIN_SPK_B, duty < 0 ? -duty : 0);

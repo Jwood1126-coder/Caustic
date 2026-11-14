@@ -1,5 +1,7 @@
 # Wiring
 
+**Testing on a breadboard first?** Use the [breadboard layout](breadboard.md).
+
 ![Wiring diagram](wiring-diagram.svg)
 
 ## The idea, simply
@@ -34,7 +36,7 @@ Don't wire the ESP32 straight to the LED. A pin gives about 0.02 A, and the LED 
 | Right side, top to bottom | Connects to | Step |
 |---|---|---|
 | EEP | ESP32 3V3 | 2 |
-| OUT1 | Speaker resistors | 9 |
+| OUT1 | Speaker | 9 |
 | OUT2 | Speaker, other lead | 10 |
 | OUT3 | LED resistor → LED + | 7 |
 | OUT4 | LED − | 8 |
@@ -54,7 +56,7 @@ The numbers match the circles on the diagram.
 | 6 | DRV8833 **IN4 / BIN2** | The GND wire from step 1 | Keeps the LED from ever running backwards |
 | 7 | DRV8833 **OUT3 / BOUT1** | One **3 Ω** resistor → LED **+** | LED power |
 | 8 | LED **−** | DRV8833 **OUT4 / BOUT2** | LED return |
-| 9 | DRV8833 **OUT1 / AOUT1** | Three **3 Ω** resistors in a row → speaker | Speaker power |
+| 9 | DRV8833 **OUT1 / AOUT1** | Speaker | Speaker power. No resistors: the firmware caps it at 40% for this 4 Ω 3 W speaker. |
 | 10 | Speaker's other terminal | DRV8833 **OUT2 / AOUT2** | Speaker return. The speaker can go either way round. |
 | 11 | ESP32 **VIN** | DRV8833 **VCC / VM** | 5 V power from the charger, passed through the ESP32 board |
 

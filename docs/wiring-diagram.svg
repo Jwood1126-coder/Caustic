@@ -70,12 +70,7 @@
   <!-- ===== Speaker side ===== -->
   <path class="w" stroke="#7048e8" d="M700 220 H1040"/>
   <path class="w" stroke="#7048e8" d="M700 300 H1040"/>
-  <g>
-    <rect x="745" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="774" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
-    <rect x="825" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="854" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
-    <rect x="905" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="934" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
-  </g>
-  <text x="854" y="190" text-anchor="middle" class="s">three 3 Ω 5 W resistors in a row</text>
+  <text x="870" y="205" text-anchor="middle" class="s">no resistors: the firmware limits the speaker</text>
   <rect x="1040" y="190" width="120" height="140" rx="10" fill="#2a2e35"/>
   <circle cx="1100" cy="260" r="46" fill="#3f454e" stroke="#15181c" stroke-width="3"/>
   <circle cx="1100" cy="260" r="16" fill="#15181c"/>

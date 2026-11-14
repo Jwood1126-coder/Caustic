@@ -58,4 +58,4 @@
 - 20 kHz PWM on both channels, above hearing.
 - The speaker gets a sine wave, not a square wave, so it moves the water without making noise.
 - BIN2 is wired to GND, so the LED can never be driven backwards.
-- The resistors set the current: about 0.5 A for the LED and about 0.35 A peak for the speaker.
+- One 3 Ω resistor sets the LED current at about 0.5 A. The speaker (4 Ω 3 W) has no resistor. The firmware caps its duty at 40%, about 0.46 A peak.

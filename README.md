@@ -13,15 +13,21 @@ and the ripple frequency.
 |---|---|
 | CAD (revision 2) | Done. 15 print files, checked in software. Nothing printed yet. |
 | Printing | In progress on the Bambu P1S. |
-| Firmware | Done, compiled and flashed to the ESP32. Commands tested over serial. Not yet tested with real loads. |
+| Firmware | Done, flashed to the ESP32. Wi-Fi control page and serial commands working. Not yet tested with real loads. |
 | Electronics | Waiting on the DRV8833 driver board. |
 | Assembly and light tests | Not started. |
+
+## Quick start
+
+1. Wire it up using the [wiring diagram](docs/wiring.md).
+2. On your phone, join the Wi-Fi network **Caustic-Rig** (password **causticrig**) and open **http://192.168.4.1**.
+3. Use the sliders to set the light and ripples. See [docs/control-page.md](docs/control-page.md).
 
 ## Repo layout
 
 | Folder | What is in it |
 |---|---|
-| [`docs/`](docs/) | Everything you need to build it: [parts list](docs/parts-list.md), [wiring](docs/wiring.md), [assembly](docs/assembly.md), [firmware](docs/firmware.md), [testing](docs/testing.md), [design notes](docs/design-notes.md). |
+| [`docs/`](docs/) | Everything you need to build it: [parts list](docs/parts-list.md), [wiring](docs/wiring.md), [control page](docs/control-page.md), [assembly](docs/assembly.md), [firmware](docs/firmware.md), [testing](docs/testing.md), [design notes](docs/design-notes.md). |
 | [`firmware/`](firmware/) | `caustic_rig/` is the main firmware. `led_test/` is a simple sketch that only dims the LED. |
 | [`cad/`](cad/) | `stl/` and `step/` print files, the full `assembly/` as STEP, the parametric `source/` scripts and `previews/`. See [cad/README.md](cad/README.md). |
 | [`archive/`](archive/) | The earlier SolidWorks caustic lamp (v1 and v2 assemblies, June 2026). |

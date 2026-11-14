@@ -5,17 +5,21 @@
 //   Channel A (AIN1/AIN2 -> AOUT1/AOUT2): speaker, through three 3 ohm resistors in series
 //   Channel B (BIN1 -> BOUT1/BOUT2):      LED star, through one 3 ohm resistor. BIN2 is wired to GND.
 //
-// Both channels use 20 kHz PWM so nothing whines. The speaker gets a sine wave
-// (PWM duty follows a sine), not a square wave, so the cone moves smoothly and quietly.
-//
-// Serial Monitor at 115200 baud, line ending "New Line". Commands:
-//   led <0-100>               LED brightness, percent
-//   amp <0-100>               speaker drive, percent
-//   freq <hz>                 wave frequency, 0.5 to 40 Hz
-//   sweep <from> <to> <sec>   glide the frequency from one value to another
-//   stop                      speaker off (LED stays as set)
-//   off                       speaker and LED off
-//   status                    print the current settings
+// Control it from a web page or the Serial Monitor.
+//   Web: join the Wi-Fi network "Caustic-Rig" (password "causticrig") and open http://192.168.4.1
+//        If you save your home Wi-Fi on the page, it is also at http://caustic.local on your network.
+//   Serial (115200 baud, "New Line"): led <0-100>, amp <0-100>, freq <hz>,
+//        sweep <from> <to> <sec>, stop, off, status
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <Preferences.h>
+#include "page.h"
+
+const char *AP_SSID = "Caustic-Rig";
+const char *AP_PASS = "causticrig";  // at least 8 characters
+const char *HOSTNAME = "caustic";    // http://caustic.local
 
 const int PIN_SPK_A = 25;  // DRV8833 AIN1 (IN1)
 const int PIN_SPK_B = 26;  // DRV8833 AIN2 (IN2)
@@ -33,7 +37,6 @@ int ledPercent = LED_START;
 int ampPercent = 0;  // speaker starts off
 float freqHz = FREQ_START;
 
-// sweep state
 bool sweeping = false;
 float sweepFrom, sweepTo;
 unsigned long sweepStartMs, sweepMs;
@@ -41,14 +44,51 @@ unsigned long sweepStartMs, sweepMs;
 float phase = 0;  // radians, accumulated so frequency changes never jump
 unsigned long lastUs;
 
-void applyLed() {
+WebServer server(80);
+Preferences prefs;
+String homeSsid;
+
+// ---------- controls shared by serial and web ----------
+
+void setLed(int p) {
+  ledPercent = constrain(p, 0, 100);
   ledcWrite(PIN_LED, ledPercent * PWM_MAX / 100);
+}
+
+void setAmp(int p) { ampPercent = constrain(p, 0, 100); }
+
+void setFreq(float f) {
+  sweeping = false;
+  freqHz = constrain(f, FREQ_MIN, FREQ_MAX);
+}
+
+void startSweep(float a, float b, float sec) {
+  sweepFrom = constrain(a, FREQ_MIN, FREQ_MAX);
+  sweepTo = constrain(b, FREQ_MIN, FREQ_MAX);
+  sweepMs = (unsigned long)(sec * 1000);
+  sweepStartMs = millis();
+  sweeping = true;
+}
+
+void stopSpeaker() { ampPercent = 0; sweeping = false; }
+
+void allOff() { stopSpeaker(); setLed(0); }
+
+String statusJson() {
+  String ip = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
+  char buf[200];
+  snprintf(buf, sizeof(buf),
+           "{\"led\":%d,\"amp\":%d,\"freq\":%.2f,\"sweeping\":%s,\"home_ssid\":\"%s\",\"home_ip\":\"%s\"}",
+           ledPercent, ampPercent, freqHz, sweeping ? "true" : "false", homeSsid.c_str(), ip.c_str());
+  return String(buf);
 }
 
 void printStatus() {
   Serial.printf("led %d%%  amp %d%%  freq %.2f Hz%s\n", ledPercent, ampPercent, freqHz,
                 sweeping ? "  (sweeping)" : "");
 }
+
+// ---------- serial ----------
 
 void handleLine(String s) {
   s.trim();
@@ -58,40 +98,91 @@ void handleLine(String s) {
   String cmd = sp < 0 ? s : s.substring(0, sp);
   String arg = sp < 0 ? "" : s.substring(sp + 1);
 
-  if (cmd == "led") {
-    ledPercent = constrain(arg.toInt(), 0, 100);
-    applyLed();
-  } else if (cmd == "amp") {
-    ampPercent = constrain(arg.toInt(), 0, 100);
-  } else if (cmd == "freq") {
-    sweeping = false;
-    freqHz = constrain(arg.toFloat(), FREQ_MIN, FREQ_MAX);
-  } else if (cmd == "sweep") {
+  if (cmd == "led") setLed(arg.toInt());
+  else if (cmd == "amp") setAmp(arg.toInt());
+  else if (cmd == "freq") setFreq(arg.toFloat());
+  else if (cmd == "sweep") {
     float a, b, sec;
-    if (sscanf(arg.c_str(), "%f %f %f", &a, &b, &sec) == 3 && sec > 0) {
-      sweepFrom = constrain(a, FREQ_MIN, FREQ_MAX);
-      sweepTo = constrain(b, FREQ_MIN, FREQ_MAX);
-      sweepMs = (unsigned long)(sec * 1000);
-      sweepStartMs = millis();
-      sweeping = true;
-    } else {
-      Serial.println("usage: sweep <from Hz> <to Hz> <seconds>");
-      return;
-    }
-  } else if (cmd == "stop") {
-    ampPercent = 0;
-    sweeping = false;
-  } else if (cmd == "off") {
-    ampPercent = 0;
-    sweeping = false;
-    ledPercent = 0;
-    applyLed();
-  } else if (cmd != "status") {
-    Serial.println("commands: led, amp, freq, sweep, stop, off, status");
-    return;
+    if (sscanf(arg.c_str(), "%f %f %f", &a, &b, &sec) == 3 && sec > 0) startSweep(a, b, sec);
+    else { Serial.println("usage: sweep <from Hz> <to Hz> <seconds>"); return; }
   }
+  else if (cmd == "stop") stopSpeaker();
+  else if (cmd == "off") allOff();
+  else if (cmd != "status") { Serial.println("commands: led, amp, freq, sweep, stop, off, status"); return; }
   printStatus();
 }
+
+// ---------- web ----------
+
+void sendStatus() { server.send(200, "application/json", statusJson()); }
+
+void setupWeb() {
+  server.on("/", HTTP_GET, []() { server.send_P(200, "text/html", PAGE_HTML); });
+
+  server.on("/api/status", HTTP_GET, sendStatus);
+
+  server.on("/api/set", HTTP_POST, []() {
+    if (server.hasArg("led")) setLed(server.arg("led").toInt());
+    if (server.hasArg("amp")) setAmp(server.arg("amp").toInt());
+    if (server.hasArg("freq")) setFreq(server.arg("freq").toFloat());
+    sendStatus();
+  });
+
+  server.on("/api/sweep", HTTP_POST, []() {
+    float sec = server.arg("sec").toFloat();
+    if (sec <= 0) { server.send(400, "text/plain", "seconds must be above 0"); return; }
+    startSweep(server.arg("from").toFloat(), server.arg("to").toFloat(), sec);
+    sendStatus();
+  });
+
+  server.on("/api/stop", HTTP_POST, []() { stopSpeaker(); sendStatus(); });
+  server.on("/api/off", HTTP_POST, []() { allOff(); sendStatus(); });
+
+  server.on("/api/wifi", HTTP_POST, []() {
+    prefs.putString("ssid", server.arg("ssid"));
+    prefs.putString("pass", server.arg("pass"));
+    server.send(200, "text/plain", "saved, restarting");
+    delay(500);
+    ESP.restart();
+  });
+
+  server.on("/api/wifi/forget", HTTP_POST, []() {
+    prefs.remove("ssid");
+    prefs.remove("pass");
+    server.send(200, "text/plain", "forgotten, restarting");
+    delay(500);
+    ESP.restart();
+  });
+
+  server.onNotFound([]() { server.send(404, "text/plain", "not found"); });
+  server.begin();
+}
+
+void setupWifi() {
+  prefs.begin("caustic", false);
+  homeSsid = prefs.getString("ssid", "");
+  String homePass = prefs.getString("pass", "");
+
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.setHostname(HOSTNAME);
+  if (homeSsid.length()) {
+    WiFi.begin(homeSsid.c_str(), homePass.c_str());
+    Serial.printf("Joining home Wi-Fi \"%s\"", homeSsid.c_str());
+    for (int i = 0; i < 20 && WiFi.status() != WL_CONNECTED; i++) { delay(500); Serial.print("."); }
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED)
+      Serial.printf("Home Wi-Fi: http://%s.local or http://%s\n", HOSTNAME, WiFi.localIP().toString().c_str());
+    else
+      Serial.println("Could not join home Wi-Fi. The Caustic-Rig network still works.");
+  }
+  WiFi.softAP(AP_SSID, AP_PASS);
+  Serial.printf("Rig Wi-Fi: join \"%s\" (password %s), open http://%s\n", AP_SSID, AP_PASS,
+                WiFi.softAPIP().toString().c_str());
+  MDNS.begin(HOSTNAME);
+  MDNS.addService("http", "tcp", 80);
+}
+
+// ---------- main ----------
 
 void setup() {
   Serial.begin(115200);
@@ -101,13 +192,18 @@ void setup() {
   ledcAttach(PIN_LED, PWM_FREQ, PWM_BITS);
   ledcWrite(PIN_SPK_A, 0);
   ledcWrite(PIN_SPK_B, 0);
-  applyLed();
+  setLed(LED_START);
+
+  setupWifi();
+  setupWeb();
+
   lastUs = micros();
   Serial.println("Caustic rig ready. Type: led 20, amp 30, freq 10, sweep 5 25 20, stop, off, status");
   printStatus();
 }
 
 void loop() {
+  server.handleClient();
   if (Serial.available()) handleLine(Serial.readStringUntil('\n'));
 
   if (sweeping) {

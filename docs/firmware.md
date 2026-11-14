@@ -4,7 +4,7 @@ Two sketches are in [`firmware/`](../firmware/):
 
 | Sketch | What it does |
 |---|---|
-| `caustic_rig/` | Main firmware. LED brightness plus a smooth sine wave on the speaker, with frequency sweeps. |
+| `caustic_rig/` | Main firmware. LED brightness plus a smooth sine wave on the speaker, with frequency sweeps. Hosts the Wi-Fi [control page](control-page.md) (`page.h`) and also takes Serial commands. |
 | `led_test/` | Only dims the LED on GPIO 27. Type 0 to 100. |
 
 The board currently has `caustic_rig` flashed. It was compiled with ESP32 Arduino core 3.3.12.
@@ -23,7 +23,25 @@ The board currently has `caustic_rig` flashed. It was compiled with ESP32 Arduin
 arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --upload -p COM6 firmware/caustic_rig
 ```
 
-## Commands
+## Wi-Fi and web API
+
+The easiest way to control the rig is the [control page](control-page.md). The ESP32 always runs its own network,
+**Caustic-Rig** (password `causticrig`), at `http://192.168.4.1`. If you save a home network on the page, it also joins that
+network as `http://caustic.local`. The home network is stored in the ESP32's flash, not in this repo.
+
+The page talks to these endpoints, which you can also call from scripts:
+
+| Method and path | Parameters | Effect |
+|---|---|---|
+| `GET /api/status` | | JSON with `led`, `amp`, `freq`, `sweeping`, `home_ssid`, `home_ip` |
+| `POST /api/set` | any of `led`, `amp`, `freq` | Sets values |
+| `POST /api/sweep` | `from`, `to`, `sec` | Starts a sweep |
+| `POST /api/stop` | | Speaker off |
+| `POST /api/off` | | Speaker and LED off |
+| `POST /api/wifi` | `ssid`, `pass` | Saves the home network and restarts |
+| `POST /api/wifi/forget` | | Forgets the home network and restarts |
+
+## Serial commands
 
 Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**.
 

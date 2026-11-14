@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 860" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <style>
+    .t{font-size:15px;fill:#1d2733}
+    .s{font-size:13px;fill:#4c5b6a}
+    .h{font-size:18px;font-weight:700;fill:#1d2733}
+    .pin{font-size:14px;font-weight:700;fill:#ffffff}
+    .w{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+    .badge circle{fill:#ffffff;stroke:#1d2733;stroke-width:2}
+    .badge text{font-size:14px;font-weight:700;fill:#1d2733;text-anchor:middle;dominant-baseline:central}
+  </style>
+  <rect width="1200" height="860" fill="#ffffff"/>
+  <text x="40" y="44" style="font-size:26px;font-weight:700;fill:#1d2733">Caustic Rig wiring</text>
+  <text x="40" y="70" class="s">Match each wire by the label printed on the board. Pin positions here are drawn for clarity, not to scale. Numbers match the steps in wiring.md.</text>
+
+  <!-- ===== ESP32 ===== -->
+  <rect x="60" y="130" width="200" height="420" rx="10" fill="#2d6fb7"/>
+  <rect x="110" y="150" width="100" height="70" rx="4" fill="#c9d3dc"/>
+  <text x="160" y="190" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#2d3c4b">ESP32</text>
+  <text x="160" y="260" text-anchor="middle" class="pin" style="font-size:18px">ESP32</text>
+  <text x="160" y="282" text-anchor="middle" class="pin" style="font-weight:400">DevKit V1</text>
+  <rect x="135" y="535" width="50" height="30" rx="4" fill="#9aa6b2"/>
+  <text x="160" y="590" text-anchor="middle" class="t">USB cable to PC</text>
+  <text x="160" y="610" text-anchor="middle" class="s">(powers the ESP32)</text>
+  <!-- ESP32 pins -->
+  <g>
+    <rect x="200" y="188" width="60" height="24" rx="4" fill="#173d66"/><text x="230" y="205" text-anchor="middle" class="pin">3V3</text>
+    <rect x="200" y="268" width="60" height="24" rx="4" fill="#173d66"/><text x="230" y="285" text-anchor="middle" class="pin">D25</text>
+    <rect x="200" y="328" width="60" height="24" rx="4" fill="#173d66"/><text x="230" y="345" text-anchor="middle" class="pin">D26</text>
+    <rect x="200" y="388" width="60" height="24" rx="4" fill="#173d66"/><text x="230" y="405" text-anchor="middle" class="pin">D27</text>
+    <rect x="200" y="468" width="60" height="24" rx="4" fill="#173d66"/><text x="230" y="485" text-anchor="middle" class="pin">GND</text>
+    <rect x="72" y="468" width="60" height="24" rx="4" fill="#173d66"/><text x="102" y="485" text-anchor="middle" class="pin">VIN</text>
+  </g>
+  <text x="102" y="512" text-anchor="middle" class="s" style="fill:#ffffff">leave empty</text>
+
+  <!-- ===== DRV8833 ===== -->
+  <rect x="480" y="150" width="220" height="420" rx="10" fill="#7a4fb0"/>
+  <text x="650" y="545" text-anchor="middle" class="pin" style="font-size:20px">DRV8833</text>
+  <text x="650" y="563" text-anchor="middle" class="pin" style="font-weight:400">driver board</text>
+  <g>
+    <rect x="480" y="188" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="205" text-anchor="middle" class="pin">SLP / EEP</text>
+    <rect x="480" y="268" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="285" text-anchor="middle" class="pin">IN1 / AIN1</text>
+    <rect x="480" y="328" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="345" text-anchor="middle" class="pin">IN2 / AIN2</text>
+    <rect x="480" y="388" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="405" text-anchor="middle" class="pin">IN3 / BIN1</text>
+    <rect x="480" y="428" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="445" text-anchor="middle" class="pin">IN4 / BIN2</text>
+    <rect x="480" y="468" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="485" text-anchor="middle" class="pin">GND</text>
+    <rect x="480" y="518" width="92" height="24" rx="4" fill="#4a2a73"/><text x="526" y="535" text-anchor="middle" class="pin">VCC / VM</text>
+
+    <rect x="600" y="208" width="100" height="24" rx="4" fill="#4a2a73"/><text x="650" y="225" text-anchor="middle" class="pin">OUT1 / AOUT1</text>
+    <rect x="600" y="288" width="100" height="24" rx="4" fill="#4a2a73"/><text x="650" y="305" text-anchor="middle" class="pin">OUT2 / AOUT2</text>
+    <rect x="600" y="408" width="100" height="24" rx="4" fill="#4a2a73"/><text x="650" y="425" text-anchor="middle" class="pin">OUT3 / BOUT1</text>
+    <rect x="600" y="488" width="100" height="24" rx="4" fill="#4a2a73"/><text x="650" y="505" text-anchor="middle" class="pin">OUT4 / BOUT2</text>
+  </g>
+
+  <!-- ===== USB-C power ===== -->
+  <rect x="330" y="640" width="130" height="80" rx="8" fill="#2f9e6b"/>
+  <text x="395" y="676" text-anchor="middle" class="pin">USB-C socket</text>
+  <rect x="340" y="628" width="40" height="22" rx="4" fill="#1d6b47"/><text x="360" y="644" text-anchor="middle" class="pin">−</text>
+  <rect x="410" y="628" width="40" height="22" rx="4" fill="#1d6b47"/><text x="430" y="644" text-anchor="middle" class="pin">+</text>
+  <rect x="380" y="720" width="30" height="40" fill="#9aa6b2"/>
+  <rect x="345" y="760" width="100" height="56" rx="8" fill="#e4e8ec" stroke="#9aa6b2" stroke-width="2"/>
+  <text x="395" y="785" text-anchor="middle" class="t" style="font-weight:700">5 V charger</text>
+  <text x="395" y="804" text-anchor="middle" class="s">1.5 A or more</text>
+
+  <!-- ===== Wires: ESP32 to DRV8833 ===== -->
+  <path class="w" stroke="#e8590c" d="M260 200 H480"/>
+  <path class="w" stroke="#1c7ed6" d="M260 280 H480"/>
+  <path class="w" stroke="#2b9a3e" d="M260 340 H480"/>
+  <path class="w" stroke="#e0b000" d="M260 400 H480"/>
+  <path class="w" stroke="#1d2733" d="M260 480 H480"/>
+  <path class="w" stroke="#1d2733" d="M480 440 H440 V480"/>
+  <circle cx="440" cy="480" r="7" fill="#1d2733"/>
+  <!-- power -->
+  <path class="w" stroke="#d6336c" d="M480 530 H430 V628"/>
+  <path class="w" stroke="#1d2733" d="M360 628 V480"/>
+  <circle cx="360" cy="480" r="7" fill="#1d2733"/>
+
+  <!-- ===== Speaker side ===== -->
+  <path class="w" stroke="#7048e8" d="M700 220 H1040"/>
+  <path class="w" stroke="#7048e8" d="M700 300 H1040"/>
+  <g>
+    <rect x="745" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="774" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
+    <rect x="825" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="854" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
+    <rect x="905" y="204" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="934" y="225" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
+  </g>
+  <text x="854" y="190" text-anchor="middle" class="s">three 3 Ω 5 W resistors in a row</text>
+  <rect x="1040" y="190" width="120" height="140" rx="10" fill="#2a2e35"/>
+  <circle cx="1100" cy="260" r="46" fill="#3f454e" stroke="#15181c" stroke-width="3"/>
+  <circle cx="1100" cy="260" r="16" fill="#15181c"/>
+  <text x="1100" y="352" text-anchor="middle" class="h">Speaker</text>
+  <text x="1100" y="372" text-anchor="middle" class="s">either lead, either way</text>
+
+  <!-- ===== LED side ===== -->
+  <path class="w" stroke="#c92a2a" d="M700 420 H1040"/>
+  <path class="w" stroke="#495057" d="M700 500 H1040"/>
+  <rect x="825" y="404" width="58" height="32" rx="5" fill="#f4f1e8" stroke="#8c7f62" stroke-width="2"/><text x="854" y="425" text-anchor="middle" class="t" style="font-weight:700">3 Ω</text>
+  <text x="854" y="392" text-anchor="middle" class="s">one 3 Ω 5 W resistor</text>
+  <!-- heatsink fins -->
+  <g fill="#b9c1c9">
+    <rect x="1150" y="400" width="10" height="120"/><rect x="1166" y="400" width="10" height="120"/><rect x="1182" y="400" width="10" height="120"/>
+  </g>
+  <rect x="1040" y="400" width="112" height="120" rx="6" fill="#c9d0d7" stroke="#8a949e" stroke-width="2"/>
+  <polygon points="1096,420 1128,438 1128,482 1096,500 1064,482 1064,438" fill="#f6f6f2" stroke="#8a949e" stroke-width="2"/>
+  <circle cx="1096" cy="460" r="14" fill="#ffd34d" stroke="#c99a00" stroke-width="2"/>
+  <rect x="1040" y="408" width="30" height="24" rx="4" fill="#c92a2a"/><text x="1055" y="425" text-anchor="middle" class="pin">+</text>
+  <rect x="1040" y="488" width="30" height="24" rx="4" fill="#495057"/><text x="1055" y="505" text-anchor="middle" class="pin">−</text>
+  <text x="1096" y="546" text-anchor="middle" class="h">LED on heatsink</text>
+  <text x="1096" y="566" text-anchor="middle" class="s">+ and − must be the right way</text>
+
+  <!-- ===== Badges ===== -->
+  <g class="badge">
+    <g transform="translate(370 200)"><circle r="13"/><text>2</text></g>
+    <g transform="translate(370 280)"><circle r="13"/><text>3</text></g>
+    <g transform="translate(370 340)"><circle r="13"/><text>4</text></g>
+    <g transform="translate(370 400)"><circle r="13"/><text>5</text></g>
+    <g transform="translate(300 480)"><circle r="13"/><text>1</text></g>
+    <g transform="translate(460 440)"><circle r="13"/><text>6</text></g>
+    <g transform="translate(720 420)"><circle r="13"/><text>7</text></g>
+    <g transform="translate(990 500)"><circle r="13"/><text>8</text></g>
+    <g transform="translate(720 220)"><circle r="13"/><text>9</text></g>
+    <g transform="translate(990 300)"><circle r="13"/><text>10</text></g>
+    <g transform="translate(430 590)"><circle r="13"/><text>11</text></g>
+    <g transform="translate(360 590)"><circle r="13"/><text>12</text></g>
+  </g>
+
+  <!-- ===== Legend ===== -->
+  <g transform="translate(560 640)">
+    <rect width="600" height="190" rx="10" fill="#f5f7f9" stroke="#d3dce4"/>
+    <text x="20" y="30" class="h">Wire colours (any colour works, these just help)</text>
+    <g transform="translate(20 50)">
+      <rect y="0" width="28" height="6" fill="#1d2733"/><text x="38" y="7" class="t">Ground (GND). All grounds join.</text>
+      <rect y="26" width="28" height="6" fill="#d6336c"/><text x="38" y="33" class="t">5 V power from the charger</text>
+      <rect y="52" width="28" height="6" fill="#e8590c"/><text x="38" y="59" class="t">3.3 V: switches the driver on</text>
+      <rect y="78" width="28" height="6" fill="#e0b000"/><text x="38" y="85" class="t">LED brightness signal (D27)</text>
+      <rect y="104" width="28" height="6" fill="#1c7ed6"/><text x="38" y="111" class="t">Speaker signals (D25, D26)</text>
+      <rect x="300" y="0" width="28" height="6" fill="#7048e8"/><text x="338" y="7" class="t">Speaker power</text>
+      <rect x="300" y="26" width="28" height="6" fill="#c92a2a"/><text x="338" y="33" class="t">LED + power</text>
+      <rect x="300" y="52" width="28" height="6" fill="#495057"/><text x="338" y="59" class="t">LED − return</text>
+      <circle cx="314" cy="84" r="6" fill="#1d2733"/><text x="338" y="89" class="t">Dot = wires joined</text>
+    </g>
+  </g>
+</svg>

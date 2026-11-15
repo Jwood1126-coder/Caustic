@@ -9,7 +9,7 @@
 //   Web: join the Wi-Fi network "Caustic-Rig" (password "causticrig") and open http://192.168.4.1
 //        If you save your home Wi-Fi on the page, it is also at http://caustic.local on your network.
 //   Serial (115200 baud, "New Line"): led <0-100>, amp <0-100>, freq <hz>,
-//        sweep <from> <to> <sec>, stop, off, status
+//        sweep <from> <to> <sec>, comp <0-100>, stop, off, status, diag
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -29,13 +29,20 @@ const int PWM_FREQ = 20000;
 const int PWM_BITS = 10;
 const int PWM_MAX  = (1 << PWM_BITS) - 1;
 
-const int LED_START = 10;      // percent at power-up; the LED heats up fast
+const int LED_START = 100;     // percent at power-up; needs the heatsink
 const float FREQ_START = 10.0; // Hz
 const float FREQ_MIN = 0.5, FREQ_MAX = 40.0;
 
-// The speaker has no series resistor, so 100% on the slider is limited to 40% PWM duty:
-// about 0.46 A peak and under 0.5 W into the 4 ohm 3 W speaker.
-const float SPK_LIMIT = 0.40;
+// The speaker has no series resistor, so 100% on the slider is limited to 60% PWM duty:
+// about 0.75 A peak and about 1.1 W into the 4 ohm 3 W speaker. Use the 5 V 2 A charger at high settings:
+// all power passes through the ESP32 board's USB diode (about 1 A), so a PC port may brown out.
+const float SPK_LIMIT = 0.60;
+
+// Flicker fix. The speaker and LED share one 5 V supply, so the supply sags as the speaker pulls current and the
+// LED dims with it. compPercent dims the LED by the same amount when the speaker is NOT pulling, so its brightness
+// stays level. 0 = off. Raise it until slow ripples (1-3 Hz) stop flickering. Saved in flash.
+const int COMP_START = 30;
+int compPercent = COMP_START;
 
 int ledPercent = LED_START;
 int ampPercent = 0;  // speaker starts off
@@ -46,7 +53,7 @@ float sweepFrom, sweepTo;
 unsigned long sweepStartMs, sweepMs;
 
 float phase = 0;  // radians, accumulated so frequency changes never jump
-unsigned long lastUs;
+volatile uint32_t maxWaveGapUs = 0, maxLoopGapUs = 0;  // for the "diag" command
 
 WebServer server(80);
 Preferences prefs;
@@ -54,9 +61,20 @@ String homeSsid;
 
 // ---------- controls shared by serial and web ----------
 
+void writeLed(float spkNow) {  // spkNow: speaker duty right now, 0..1
+  float spkPeak = ampPercent * SPK_LIMIT / 100;
+  float level = ledPercent / 100.0f * (1 - compPercent / 100.0f * (spkPeak - spkNow));
+  ledcWrite(PIN_LED, (int)(constrain(level, 0.0f, 1.0f) * PWM_MAX));
+}
+
 void setLed(int p) {
   ledPercent = constrain(p, 0, 100);
-  ledcWrite(PIN_LED, ledPercent * PWM_MAX / 100);
+  writeLed(0);
+}
+
+void setComp(int p) {
+  compPercent = constrain(p, 0, 100);
+  prefs.putInt("comp", compPercent);
 }
 
 void setAmp(int p) { ampPercent = constrain(p, 0, 100); }
@@ -82,13 +100,13 @@ String statusJson() {
   String ip = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
   char buf[200];
   snprintf(buf, sizeof(buf),
-           "{\"led\":%d,\"amp\":%d,\"freq\":%.2f,\"sweeping\":%s,\"home_ssid\":\"%s\",\"home_ip\":\"%s\"}",
-           ledPercent, ampPercent, freqHz, sweeping ? "true" : "false", homeSsid.c_str(), ip.c_str());
+           "{\"led\":%d,\"amp\":%d,\"freq\":%.2f,\"comp\":%d,\"sweeping\":%s,\"home_ssid\":\"%s\",\"home_ip\":\"%s\"}",
+           ledPercent, ampPercent, freqHz, compPercent, sweeping ? "true" : "false", homeSsid.c_str(), ip.c_str());
   return String(buf);
 }
 
 void printStatus() {
-  Serial.printf("led %d%%  amp %d%%  freq %.2f Hz%s\n", ledPercent, ampPercent, freqHz,
+  Serial.printf("led %d%%  amp %d%%  freq %.2f Hz  comp %d%s\n", ledPercent, ampPercent, freqHz, compPercent,
                 sweeping ? "  (sweeping)" : "");
 }
 
@@ -110,9 +128,16 @@ void handleLine(String s) {
     if (sscanf(arg.c_str(), "%f %f %f", &a, &b, &sec) == 3 && sec > 0) startSweep(a, b, sec);
     else { Serial.println("usage: sweep <from Hz> <to Hz> <seconds>"); return; }
   }
+  else if (cmd == "comp") setComp(arg.toInt());
+  else if (cmd == "diag") {
+    Serial.printf("longest gap since last diag: waveform %.1f ms, web/serial loop %.1f ms\n",
+                  maxWaveGapUs / 1000.0, maxLoopGapUs / 1000.0);
+    maxWaveGapUs = maxLoopGapUs = 0;
+    return;
+  }
   else if (cmd == "stop") stopSpeaker();
   else if (cmd == "off") allOff();
-  else if (cmd != "status") { Serial.println("commands: led, amp, freq, sweep, stop, off, status"); return; }
+  else if (cmd != "status") { Serial.println("commands: led, amp, freq, sweep, comp, stop, off, status"); return; }
   printStatus();
 }
 
@@ -129,6 +154,7 @@ void setupWeb() {
     if (server.hasArg("led")) setLed(server.arg("led").toInt());
     if (server.hasArg("amp")) setAmp(server.arg("amp").toInt());
     if (server.hasArg("freq")) setFreq(server.arg("freq").toFloat());
+    if (server.hasArg("comp")) setComp(server.arg("comp").toInt());
     sendStatus();
   });
 
@@ -166,6 +192,7 @@ void setupWifi() {
   prefs.begin("caustic", false);
   homeSsid = prefs.getString("ssid", "");
   String homePass = prefs.getString("pass", "");
+  compPercent = prefs.getInt("comp", COMP_START);
 
   WiFi.mode(WIFI_AP_STA);
   WiFi.setHostname(HOSTNAME);
@@ -186,6 +213,30 @@ void setupWifi() {
   MDNS.addService("http", "tcp", 80);
 }
 
+// ---------- speaker waveform ----------
+// Runs in its own task at a higher priority than loop(), so serving the web page never stalls the
+// waveform. A stall used to freeze the cone and then jump it to catch up, which clicked.
+
+void waveTask(void *) {
+  int64_t last = esp_timer_get_time();
+  for (;;) {
+    vTaskDelay(1);  // 1 ms
+    int64_t now = esp_timer_get_time();
+    uint32_t gap = (uint32_t)(now - last);
+    if (gap > maxWaveGapUs) maxWaveGapUs = gap;
+    last = now;
+
+    phase += TWO_PI * freqHz * gap * 1e-6f;
+    if (phase > TWO_PI) phase -= TWO_PI;
+
+    int duty = (int)(sinf(phase) * ampPercent * SPK_LIMIT * PWM_MAX / 100);
+    // Positive half drives AIN1, negative half drives AIN2. The other input stays low.
+    ledcWrite(PIN_SPK_A, duty > 0 ? duty : 0);
+    ledcWrite(PIN_SPK_B, duty < 0 ? -duty : 0);
+    writeLed(fabsf((float)duty) / PWM_MAX);
+  }
+}
+
 // ---------- main ----------
 
 void setup() {
@@ -201,12 +252,17 @@ void setup() {
   setupWifi();
   setupWeb();
 
-  lastUs = micros();
+  xTaskCreatePinnedToCore(waveTask, "wave", 4096, NULL, 5, NULL, 1);
   Serial.println("Caustic rig ready. Type: led 20, amp 30, freq 10, sweep 5 25 20, stop, off, status");
   printStatus();
 }
 
 void loop() {
+  static uint32_t lastLoopUs = micros();
+  uint32_t nowUs = micros();
+  if (nowUs - lastLoopUs > maxLoopGapUs) maxLoopGapUs = nowUs - lastLoopUs;
+  lastLoopUs = nowUs;
+
   server.handleClient();
   if (Serial.available()) handleLine(Serial.readStringUntil('\n'));
 
@@ -220,18 +276,5 @@ void loop() {
       freqHz = sweepFrom + (sweepTo - sweepFrom) * (float)t / sweepMs;
     }
   }
-
-  // Update the speaker waveform about every 0.5 ms.
-  unsigned long now = micros();
-  if (now - lastUs < 500) return;
-  float dt = (now - lastUs) * 1e-6f;
-  lastUs = now;
-
-  phase += TWO_PI * freqHz * dt;
-  if (phase > TWO_PI) phase -= TWO_PI;
-
-  int duty = (int)(sinf(phase) * ampPercent * SPK_LIMIT * PWM_MAX / 100);
-  // Positive half drives AIN1, negative half drives AIN2. The other input stays low.
-  ledcWrite(PIN_SPK_A, duty > 0 ? duty : 0);
-  ledcWrite(PIN_SPK_B, duty < 0 ? -duty : 0);
 }
+

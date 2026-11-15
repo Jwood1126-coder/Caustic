@@ -66,6 +66,12 @@ details summary{cursor:pointer;font-weight:600}
   <button class="main" id="sweep">Start sweep</button>
 </div>
 
+<div class="card">
+  <div class="row"><h2>Flicker fix</h2><span class="val"><span id="compV">–</span>%</span></div>
+  <input type="range" id="comp" min="0" max="100" step="1">
+  <p class="hint">Evens out the light while the speaker runs. Set ripple speed to 2 Hz, then raise this until the light stops pulsing. Too high and it pulses the other way. Saved on the rig.</p>
+</div>
+
 <div class="big"><button id="stop">Stop ripples</button><button class="warn" id="off">Everything off</button></div>
 
 <div class="card">
@@ -93,14 +99,14 @@ function send(data){ // throttle slider traffic
 }
 function show(s){
   $('conn').textContent='connected'; $('conn').className='pill ok';
-  for(const k of ['led','amp','freq']){
+  for(const k of ['led','amp','freq','comp']){
     if(dragging!==k) $(k).value=s[k];
     $(k+'V').textContent=k==='freq'?(+s[k]).toFixed(1):s[k];
   }
   $('sweep').textContent=s.sweeping?'Sweeping…':'Start sweep';
   $('wifiState').textContent=s.home_ssid?(s.home_ip?`Connected to "${s.home_ssid}" at ${s.home_ip}.`:`Saved "${s.home_ssid}" but not connected.`):'No home network saved.';
 }
-for(const k of ['led','amp','freq']){
+for(const k of ['led','amp','freq','comp']){
   const el=$(k);
   el.addEventListener('input',()=>{dragging=k; $(k+'V').textContent=k==='freq'?(+el.value).toFixed(1):el.value; send({[k]:el.value});});
   el.addEventListener('change',()=>{dragging=null;});

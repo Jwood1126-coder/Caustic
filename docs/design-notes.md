@@ -58,4 +58,4 @@
 - 20 kHz PWM on both channels, above hearing.
 - The speaker gets a sine wave, not a square wave, so it moves the water without making noise.
 - BIN2 is wired to GND, so the LED can never be driven backwards.
-- One 3 Ω resistor sets the LED current at about 0.5 A. The speaker (4 Ω 3 W) has no resistor. The firmware caps its duty at 40%, about 0.46 A peak.
+- One 3 Ω resistor sets the LED current at about 0.5 A. The speaker (4 Ω 3 W) has no resistor. The firmware caps its duty at 60%, about 0.75 A peak. All power passes through the ESP32 board's USB diode (about 1 A), so full light plus full ripple is near its limit. For more ripple power, feed 5 V straight to VIN and VCC (v2 perfboard).

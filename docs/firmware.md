@@ -33,8 +33,8 @@ The page talks to these endpoints, which you can also call from scripts:
 
 | Method and path | Parameters | Effect |
 |---|---|---|
-| `GET /api/status` | | JSON with `led`, `amp`, `freq`, `sweeping`, `home_ssid`, `home_ip` |
-| `POST /api/set` | any of `led`, `amp`, `freq` | Sets values |
+| `GET /api/status` | | JSON with `led`, `amp`, `freq`, `comp`, `sweeping`, `home_ssid`, `home_ip` |
+| `POST /api/set` | any of `led`, `amp`, `freq`, `comp` | Sets values |
 | `POST /api/sweep` | `from`, `to`, `sec` | Starts a sweep |
 | `POST /api/stop` | | Speaker off |
 | `POST /api/off` | | Speaker and LED off |
@@ -47,10 +47,11 @@ Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**
 
 | Command | Example | Effect |
 |---|---|---|
-| `led <0-100>` | `led 30` | LED brightness in percent. Starts at 10% on power-up. |
+| `led <0-100>` | `led 30` | LED brightness in percent. Starts at 100% on power-up. |
 | `amp <0-100>` | `amp 20` | Speaker drive in percent. Starts at 0 (off). |
 | `freq <hz>` | `freq 12` | Ripple frequency, 0.5 to 40 Hz. Starts at 10 Hz. |
 | `sweep <from> <to> <sec>` | `sweep 5 25 20` | Glides the frequency from 5 to 25 Hz over 20 seconds. |
+| `comp <0-100>` | `comp 30` | Flicker fix strength. Saved on the rig. Default 30. |
 | `stop` | | Speaker off. LED stays on. |
 | `off` | | Speaker and LED off. |
 | `status` | | Prints the current settings. |
@@ -60,5 +61,7 @@ Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**
 - Both DRV8833 channels use 20 kHz PWM, which is above hearing, so nothing whines.
 - The speaker gets a sine wave rather than a square wave, so the cone moves smoothly and quietly. The firmware recomputes the duty about every 0.5 ms. The positive half of the wave drives AIN1, the negative half drives AIN2, and the other input stays low.
 - Phase carries over when the frequency changes, so sweeps don't click.
+- **Flicker fix:** the speaker and LED share one 5 V supply, so the LED dims a little each time the speaker pulls current. `comp` dims the LED by the matching amount when the speaker isn't pulling, so the light stays level. Tune it at 2 Hz until the pulsing stops.
 - BIN2 is wired to GND, so the LED can only ever be driven forwards.
-- The speaker is wired without resistors. `SPK_LIMIT` (0.40) caps its PWM duty, so 100% on the slider is about 0.46 A peak into the 4 Ω 3 W speaker.
+- The speaker is wired without resistors. `SPK_LIMIT` (0.60) caps its PWM duty, so 100% on the slider is about 0.75 A peak into the 4 Ω 3 W speaker. Use the 5 V 2 A charger at high settings; a PC port may brown out.
+- The waveform runs in its own FreeRTOS task, so serving the web page can't stall it. A stall used to freeze the cone and then jump it, which clicked. `diag` prints the longest gaps.

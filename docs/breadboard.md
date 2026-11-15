@@ -39,6 +39,6 @@ The cement resistor is too fat for the breadboard. Keep it off the board, inline
 No resistors needed. The firmware limits the 4 Ω 3 W speaker.
 
 ## 5. Power up
-Plug a 5 V, 2 A+ charger into the ESP32. The LED comes on dim (10%). Then open the [control page](control-page.md).
+Plug a 5 V, 2 A+ charger into the ESP32. The LED comes on at full brightness (100%). Then open the [control page](control-page.md).
 
 **Note:** EEP is wired to 5 V (VCC) here instead of 3V3. This is within the DRV8833's rating and keeps every ESP32 wire on one side of the board.

@@ -29,6 +29,7 @@ The **Caustic-Rig** network keeps working either way. To remove the saved networ
 | **Ripple strength** | How hard the speaker taps the water | Around 10% |
 | **Ripple speed** | Taps per second (Hz) | 1–2 Hz sloshes the whole dish. 5–25 Hz makes fine ripples. |
 | **Sweep** | Glides the speed from one value to another | 5 → 25 Hz over 20 s, to find what looks best |
+| **Flicker fix** | Keeps the light level while the speaker runs. Saved on the rig. | Set speed to 2 Hz, raise until the light stops pulsing (about 30%) |
 | **Stop ripples** | Turns the speaker off. The light stays on. | |
 | **Everything off** | Light and speaker off | |
 

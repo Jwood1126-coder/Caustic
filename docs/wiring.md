@@ -56,7 +56,7 @@ The numbers match the circles on the diagram.
 | 6 | DRV8833 **IN4 / BIN2** | The GND wire from step 1 | Keeps the LED from ever running backwards |
 | 7 | DRV8833 **OUT3 / BOUT1** | One **3 Ω** resistor → LED **+** | LED power |
 | 8 | LED **−** | DRV8833 **OUT4 / BOUT2** | LED return |
-| 9 | DRV8833 **OUT1 / AOUT1** | Speaker | Speaker power. No resistors: the firmware caps it at 40% for this 4 Ω 3 W speaker. |
+| 9 | DRV8833 **OUT1 / AOUT1** | Speaker | Speaker power. No resistors: the firmware caps it at 60% for this 4 Ω 3 W speaker. |
 | 10 | Speaker's other terminal | DRV8833 **OUT2 / AOUT2** | Speaker return. The speaker can go either way round. |
 | 11 | ESP32 **VIN** | DRV8833 **VCC / VM** | 5 V power from the charger, passed through the ESP32 board |
 
@@ -64,7 +64,7 @@ Then:
 
 1. Check the LED's **+** and **−** one more time. Backwards can damage it.
 2. Plug a **5 V, 2 A or more** charger into the ESP32's USB port. Use a charger with a USB-A port and a USB-A to USB-C (or micro-USB) cable. USB-C to USB-C chargers may not turn on for this board.
-3. The LED comes on dim, at 10%. Open the control page to adjust it. See [control-page.md](control-page.md).
+3. The LED comes on at full brightness (100%). Open the control page to adjust it. See [control-page.md](control-page.md).
 
 When the ESP32 is plugged into your PC instead of a charger, the PC powers everything. Some PC ports cut out above
 about 0.5 A, so keep the light low then and use the charger for real light tests.

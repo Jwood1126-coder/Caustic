@@ -96,8 +96,12 @@ button.on{background:var(--acc);color:#1b1205}
 </div><script>
 const $=id=>document.getElementById(id);
 let busy=false,pending=null,dragging=null;
+function tfetch(u,o){ // give up after 2.5 s so one lost request never freezes the page
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),2500);
+  return fetch(u,Object.assign({},o,{signal:c.signal})).finally(()=>clearTimeout(t));
+}
 async function post(path,data){
-  const r=await fetch(path,{method:'POST',body:new URLSearchParams(data||{})});
+  const r=await tfetch(path,{method:'POST',body:new URLSearchParams(data||{})});
   if(r.headers.get('content-type')?.includes('json')) show(await r.json());
 }
 function send(data){ // throttle slider traffic
@@ -129,14 +133,18 @@ $('stop').onclick=()=>post('/api/stop');
 $('off').onclick=()=>post('/api/off');
 $('wsave').onclick=()=>{ if(!$('ssid').value) return; post('/api/wifi',{ssid:$('ssid').value,pass:$('pass').value}); $('wifiState').textContent='Saved. Restarting… reconnect in about 15 seconds.'; };
 $('wforget').onclick=()=>{ post('/api/wifi/forget'); $('wifiState').textContent='Forgotten. Restarting…'; };
-let pats=[];
-fetch('/api/patterns').then(r=>r.json()).then(n=>{
+let pats=[],patsLoading=false;
+function loadPats(){
+  if(pats.length||patsLoading) return; patsLoading=true;
+  tfetch('/api/patterns').then(r=>r.json()).then(n=>{
   pats=n;
   $('pats').innerHTML=n.map((x,i)=>`<button data-pat="${i+1}">${i+1}. ${x}</button>`).join('');
   document.querySelectorAll('[data-pat]').forEach(b=>b.onclick=()=>post('/api/pattern',{n:b.dataset.pat}));
-}).catch(()=>{});
+}).catch(()=>{}).finally(()=>{patsLoading=false;});
+}
+loadPats();
 async function poll(){
-  try{ const r=await fetch('/api/status'); show(await r.json()); }
+  try{ const r=await tfetch('/api/status'); show(await r.json()); loadPats(); }
   catch(e){ $('conn').textContent='not connected'; $('conn').className='pill bad'; }
   setTimeout(poll,1000);
 }

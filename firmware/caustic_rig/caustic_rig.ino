@@ -232,6 +232,7 @@ void setupWifi() {
   compPercent = prefs.getInt("comp", COMP_START);
 
   WiFi.mode(WIFI_AP_STA);
+  WiFi.setSleep(false);  // Wi-Fi power saving adds 100+ ms lag to every request
   WiFi.setHostname(HOSTNAME);
   if (homeSsid.length()) {
     WiFi.begin(homeSsid.c_str(), homePass.c_str());
@@ -240,8 +241,13 @@ void setupWifi() {
     Serial.println();
     if (WiFi.status() == WL_CONNECTED)
       Serial.printf("Home Wi-Fi: http://%s.local or http://%s\n", HOSTNAME, WiFi.localIP().toString().c_str());
-    else
-      Serial.println("Could not join home Wi-Fi. The Caustic-Rig network still works.");
+    else {
+      // Stop retrying. Endless retries hop across channels and make the Caustic-Rig network unreachable.
+      WiFi.setAutoReconnect(false);
+      WiFi.disconnect();
+      WiFi.mode(WIFI_AP);
+      Serial.println("Could not join home Wi-Fi. Check the name and password on the page. The Caustic-Rig network still works.");
+    }
   }
   WiFi.softAP(AP_SSID, AP_PASS);
   Serial.printf("Rig Wi-Fi: join \"%s\" (password %s), open http://%s\n", AP_SSID, AP_PASS,

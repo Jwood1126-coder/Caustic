@@ -9,13 +9,14 @@
 //   Web: join the Wi-Fi network "Caustic-Rig" (password "causticrig") and open http://192.168.4.1
 //        If you save your home Wi-Fi on the page, it is also at http://caustic.local on your network.
 //   Serial (115200 baud, "New Line"): led <0-100>, amp <0-100>, freq <hz>,
-//        sweep <from> <to> <sec>, comp <0-100>, stop, off, status, diag
+//        sweep <from> <to> <sec>, pattern <1-30>, patterns, comp <0-100>, stop, off, status, diag
 
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
 #include "page.h"
+#include "patterns.h"
 
 const char *AP_SSID = "Caustic-Rig";
 const char *AP_PASS = "causticrig";  // at least 8 characters
@@ -53,6 +54,11 @@ float sweepFrom, sweepTo;
 unsigned long sweepStartMs, sweepMs;
 
 float phase = 0;  // radians, accumulated so frequency changes never jump
+
+// Patterns (patterns.h) are played by the waveform task. Other code only posts a request.
+PatternPlayer player;
+const int PAT_NO_REQ = -100;
+volatile int patReq = PAT_NO_REQ;  // pattern index to start, -1 to stop
 volatile uint32_t maxWaveGapUs = 0, maxLoopGapUs = 0;  // for the "diag" command
 
 WebServer server(80);
@@ -79,7 +85,19 @@ void setComp(int p) {
 
 void setAmp(int p) { ampPercent = constrain(p, 0, 100); }
 
+void stopPattern() { patReq = -1; }
+
+void startPattern(int i) {  // i counts from 0
+  if (i < 0 || i >= PATTERN_COUNT) return;
+  sweeping = false;
+  if (ampPercent == 0) ampPercent = 60;
+  patReq = i;
+}
+
+int patternShown() { return patReq >= 0 ? patReq : (patReq == -1 ? -1 : player.shown()); }
+
 void setFreq(float f) {
+  stopPattern();
   sweeping = false;
   freqHz = constrain(f, FREQ_MIN, FREQ_MAX);
 }
@@ -89,25 +107,33 @@ void startSweep(float a, float b, float sec) {
   sweepTo = constrain(b, FREQ_MIN, FREQ_MAX);
   sweepMs = (unsigned long)(sec * 1000);
   sweepStartMs = millis();
+  stopPattern();
   sweeping = true;
 }
 
-void stopSpeaker() { ampPercent = 0; sweeping = false; }
+void stopSpeaker() { ampPercent = 0; sweeping = false; stopPattern(); }
 
 void allOff() { stopSpeaker(); setLed(0); }
 
 String statusJson() {
   String ip = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
-  char buf[200];
+  char buf[300];
   snprintf(buf, sizeof(buf),
-           "{\"led\":%d,\"amp\":%d,\"freq\":%.2f,\"comp\":%d,\"sweeping\":%s,\"home_ssid\":\"%s\",\"home_ip\":\"%s\"}",
-           ledPercent, ampPercent, freqHz, compPercent, sweeping ? "true" : "false", homeSsid.c_str(), ip.c_str());
+           "{\"led\":%d,\"amp\":%d,\"freq\":%.2f,\"comp\":%d,\"pattern\":%d,\"sweeping\":%s,\"home_ssid\":\"%s\",\"home_ip\":\"%s\"}",
+           ledPercent, ampPercent, freqHz, compPercent, patternShown() + 1, sweeping ? "true" : "false", homeSsid.c_str(), ip.c_str());
   return String(buf);
 }
 
 void printStatus() {
-  Serial.printf("led %d%%  amp %d%%  freq %.2f Hz  comp %d%s\n", ledPercent, ampPercent, freqHz, compPercent,
-                sweeping ? "  (sweeping)" : "");
+  int p = patternShown();
+  Serial.printf("led %d%%  amp %d%%  freq %.2f Hz  comp %d%s%s\n", ledPercent, ampPercent, freqHz, compPercent,
+                sweeping ? "  (sweeping)" : "", p >= 0 ? (String("  pattern ") + (p + 1) + " " + PATTERNS[p].name).c_str() : "");
+}
+
+String patternsJson() {
+  String j = "[";
+  for (int i = 0; i < PATTERN_COUNT; i++) j += String(i ? ",\"" : "\"") + PATTERNS[i].name + "\"";
+  return j + "]";
 }
 
 // ---------- serial ----------
@@ -129,6 +155,11 @@ void handleLine(String s) {
     else { Serial.println("usage: sweep <from Hz> <to Hz> <seconds>"); return; }
   }
   else if (cmd == "comp") setComp(arg.toInt());
+  else if (cmd == "pattern") startPattern(arg.toInt() - 1);
+  else if (cmd == "patterns") {
+    for (int i = 0; i < PATTERN_COUNT; i++) Serial.printf("%2d  %s\n", i + 1, PATTERNS[i].name);
+    return;
+  }
   else if (cmd == "diag") {
     Serial.printf("longest gap since last diag: waveform %.1f ms, web/serial loop %.1f ms\n",
                   maxWaveGapUs / 1000.0, maxLoopGapUs / 1000.0);
@@ -137,7 +168,7 @@ void handleLine(String s) {
   }
   else if (cmd == "stop") stopSpeaker();
   else if (cmd == "off") allOff();
-  else if (cmd != "status") { Serial.println("commands: led, amp, freq, sweep, comp, stop, off, status"); return; }
+  else if (cmd != "status") { Serial.println("commands: led, amp, freq, sweep, pattern, patterns, comp, stop, off, status, diag"); return; }
   printStatus();
 }
 
@@ -162,6 +193,12 @@ void setupWeb() {
     float sec = server.arg("sec").toFloat();
     if (sec <= 0) { server.send(400, "text/plain", "seconds must be above 0"); return; }
     startSweep(server.arg("from").toFloat(), server.arg("to").toFloat(), sec);
+    sendStatus();
+  });
+
+  server.on("/api/patterns", HTTP_GET, []() { server.send(200, "application/json", patternsJson()); });
+  server.on("/api/pattern", HTTP_POST, []() {
+    startPattern(server.arg("n").toInt() - 1);
     sendStatus();
   });
 
@@ -226,10 +263,22 @@ void waveTask(void *) {
     if (gap > maxWaveGapUs) maxWaveGapUs = gap;
     last = now;
 
+    int req = patReq;
+    if (req != PAT_NO_REQ) {
+      patReq = PAT_NO_REQ;
+      if (req >= 0) player.start(req, millis());
+      else player.stop();
+    }
+    float pf, pa, scale = 1.0f;
+    if (player.tick(millis(), pf, pa)) {
+      freqHz = constrain(pf, FREQ_MIN, FREQ_MAX);
+      scale = pa;
+    }
+
     phase += TWO_PI * freqHz * gap * 1e-6f;
     if (phase > TWO_PI) phase -= TWO_PI;
 
-    int duty = (int)(sinf(phase) * ampPercent * SPK_LIMIT * PWM_MAX / 100);
+    int duty = (int)(sinf(phase) * ampPercent * scale * SPK_LIMIT * PWM_MAX / 100);
     // Positive half drives AIN1, negative half drives AIN2. The other input stays low.
     ledcWrite(PIN_SPK_A, duty > 0 ? duty : 0);
     ledcWrite(PIN_SPK_B, duty < 0 ? -duty : 0);

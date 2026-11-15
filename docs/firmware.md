@@ -33,10 +33,12 @@ The page talks to these endpoints, which you can also call from scripts:
 
 | Method and path | Parameters | Effect |
 |---|---|---|
-| `GET /api/status` | | JSON with `led`, `amp`, `freq`, `comp`, `sweeping`, `home_ssid`, `home_ip` |
+| `GET /api/status` | | JSON with `led`, `amp`, `freq`, `comp`, `pattern` (0 = none), `sweeping`, `home_ssid`, `home_ip` |
 | `POST /api/set` | any of `led`, `amp`, `freq`, `comp` | Sets values |
 | `POST /api/sweep` | `from`, `to`, `sec` | Starts a sweep |
-| `POST /api/stop` | | Speaker off |
+| `GET /api/patterns` | | JSON list of pattern names |
+| `POST /api/pattern` | `n` (1 to 30) | Plays a pattern |
+| `POST /api/stop` | | Speaker off, pattern ends |
 | `POST /api/off` | | Speaker and LED off |
 | `POST /api/wifi` | `ssid`, `pass` | Saves the home network and restarts |
 | `POST /api/wifi/forget` | | Forgets the home network and restarts |
@@ -51,6 +53,8 @@ Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**
 | `amp <0-100>` | `amp 20` | Speaker drive in percent. Starts at 0 (off). |
 | `freq <hz>` | `freq 12` | Ripple frequency, 0.5 to 40 Hz. Starts at 10 Hz. |
 | `sweep <from> <to> <sec>` | `sweep 5 25 20` | Glides the frequency from 5 to 25 Hz over 20 seconds. |
+| `pattern <1-30>` | `pattern 1` | Plays a ripple pattern (see below). Speed, sweep or stop ends it. |
+| `patterns` | | Lists the 30 patterns. |
 | `comp <0-100>` | `comp 30` | Flicker fix strength. Saved on the rig. Default 30. |
 | `stop` | | Speaker off. LED stays on. |
 | `off` | | Speaker and LED off. |
@@ -65,3 +69,41 @@ Open Serial Monitor at **115200 baud**, with the line ending set to **New Line**
 - BIN2 is wired to GND, so the LED can only ever be driven forwards.
 - The speaker is wired without resistors. `SPK_LIMIT` (0.60) caps its PWM duty, so 100% on the slider is about 0.75 A peak into the 4 Ω 3 W speaker. Use the 5 V 2 A charger at high settings; a PC port may brown out.
 - The waveform runs in its own FreeRTOS task, so serving the web page can't stall it. A stall used to freeze the cone and then jump it, which clicked. `diag` prints the longest gaps.
+
+## Ripple patterns
+
+Defined in [`patterns.h`](../firmware/caustic_rig/patterns.h). Each pattern is a list of segments that glide the ripple speed
+(and sometimes the strength) and then loops. To add one, add a segment list and a `PAT(...)` line.
+
+| # | Pattern | What it does |
+|---|---|---|
+| 1 | Flick | 2 Hz, with a 20 Hz flick for 0.12 s every 1.5 s |
+| 2 | Double flick | Two quick 20 Hz flicks, then rest |
+| 3 | Ping | 1 Hz, with a 30 Hz ping every second |
+| 4 | Raindrops | Random flicks (15–35 Hz) at random times |
+| 5 | Heartbeat | Two flicks, lub-dub |
+| 6 | Shiver | 3 Hz, with a 40 Hz shiver twice a second |
+| 7 | Stutter | Three fast flicks in a row, then rest |
+| 8 | Thunder | Long calm, then a rumble that dies away |
+| 9 | Flick ladder | Flicks that climb 10, 15, 20, 25, 30 Hz |
+| 10 | Flick storm | 25 Hz flicks every 0.4 s |
+| 11 | Chirp | Quick rising chirp, then rest |
+| 12 | Down chirp | Quick falling chirp, then rest |
+| 13 | Slow rise | 1 to 25 Hz over 20 s |
+| 14 | Rise and fall | 1 to 25 Hz and back, 30 s |
+| 15 | Full sweep | 0.5 to 40 Hz over 30 s |
+| 16 | Fast climb | 2 to 30 Hz in 4 s |
+| 17 | Long fall | 30 to 1 Hz over 10 s |
+| 18 | Tide | 2 to 8 Hz and back, strength swells with it |
+| 19 | Stairs | 2 to 16 Hz in 2 Hz steps, then back down |
+| 20 | Evolve (2 min) | 0.5 to 12 Hz over a minute, then back |
+| 21 | Wobble | Smooth 6 to 14 Hz wobble |
+| 22 | Deep wobble | Smooth 2 to 22 Hz wobble |
+| 23 | Warble | Fast 15 to 25 Hz warble |
+| 24 | Siren | 5 to 25 Hz, once a second |
+| 25 | Drift | Wanders smoothly between 3 and 20 Hz at random |
+| 26 | Pulse | 8 Hz, on and off |
+| 27 | Swell | 6 Hz, strength rises and falls |
+| 28 | Taps | Short 15 Hz taps once a second |
+| 29 | Knock | Tiny 25 Hz knocks |
+| 30 | Shuffle | A random pattern every 20 s |

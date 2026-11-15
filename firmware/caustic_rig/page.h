@@ -31,6 +31,9 @@ input[type=number],input[type=text],input[type=password]{font:16px system-ui,san
 .big{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .big button{padding:16px}
 details summary{cursor:pointer;font-weight:600}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pgrid button{padding:10px 6px;font-size:14px}
+button.on{background:var(--acc);color:#1b1205}
 </style></head><body><div class="wrap">
 
 <div class="top"><h1>Caustic Rig</h1><span id="conn" class="pill">connecting…</span></div>
@@ -53,6 +56,12 @@ details summary{cursor:pointer;font-weight:600}
   <input type="range" id="freq" min="0.5" max="40" step="0.5">
   <div class="chips"><button data-freq="1">1</button><button data-freq="2">2</button><button data-freq="5">5</button><button data-freq="10">10</button><button data-freq="15">15</button><button data-freq="20">20</button><button data-freq="25">25</button></div>
   <p class="hint">Taps per second. 1–2 Hz sloshes the whole dish. 5–25 Hz makes fine ripples.</p>
+</div>
+
+<div class="card">
+  <div class="row"><h2>Patterns</h2><span class="val" style="font-size:16px" id="patV">none</span></div>
+  <div class="pgrid" id="pats"></div>
+  <p class="hint">Each pattern plays the ripple speed in a loop. Ripple strength still sets how hard. Moving the speed slider or pressing Stop ripples ends it.</p>
 </div>
 
 <div class="card">
@@ -103,6 +112,8 @@ function show(s){
     if(dragging!==k) $(k).value=s[k];
     $(k+'V').textContent=k==='freq'?(+s[k]).toFixed(1):s[k];
   }
+  $('patV').textContent=s.pattern?(pats[s.pattern-1]||('#'+s.pattern)):'none';
+  document.querySelectorAll('[data-pat]').forEach(b=>b.classList.toggle('on',+b.dataset.pat===s.pattern));
   $('sweep').textContent=s.sweeping?'Sweeping…':'Start sweep';
   $('wifiState').textContent=s.home_ssid?(s.home_ip?`Connected to "${s.home_ssid}" at ${s.home_ip}.`:`Saved "${s.home_ssid}" but not connected.`):'No home network saved.';
 }
@@ -118,6 +129,12 @@ $('stop').onclick=()=>post('/api/stop');
 $('off').onclick=()=>post('/api/off');
 $('wsave').onclick=()=>{ if(!$('ssid').value) return; post('/api/wifi',{ssid:$('ssid').value,pass:$('pass').value}); $('wifiState').textContent='Saved. Restarting… reconnect in about 15 seconds.'; };
 $('wforget').onclick=()=>{ post('/api/wifi/forget'); $('wifiState').textContent='Forgotten. Restarting…'; };
+let pats=[];
+fetch('/api/patterns').then(r=>r.json()).then(n=>{
+  pats=n;
+  $('pats').innerHTML=n.map((x,i)=>`<button data-pat="${i+1}">${i+1}. ${x}</button>`).join('');
+  document.querySelectorAll('[data-pat]').forEach(b=>b.onclick=()=>post('/api/pattern',{n:b.dataset.pat}));
+}).catch(()=>{});
 async function poll(){
   try{ const r=await fetch('/api/status'); show(await r.json()); }
   catch(e){ $('conn').textContent='not connected'; $('conn').className='pill bad'; }
